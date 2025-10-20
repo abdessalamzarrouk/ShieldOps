@@ -45,6 +45,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // Allow unauthenticated access to your custom login and register pages,
                         // and any static assets (CSS, JS, images)
+                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/comptable/**").hasRole("COMPTABLE")

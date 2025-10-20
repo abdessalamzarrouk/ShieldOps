@@ -1,17 +1,29 @@
-# Use an official OpenJDK runtime as a parent image
-FROM eclipse-temurin:17-jdk-jammy
+# ----------------------------
+# 1. Build stage
+# ----------------------------
+FROM maven:3.9.4-eclipse-temurin-17 AS builder
+WORKDIR /app
 
-# Add Maintainer info (optional)
-LABEL maintainer="your-email@example.com"
+# Copy pom.xml and download dependencies first (to use Docker cache)
+COPY pom.xml .
+RUN mvn dependency:go-offline
 
-# The application's jar file
-ARG JAR_FILE=target/*.jar
+# Copy the source and build the application
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Copy the jar file into the container
-COPY ${JAR_FILE} app.jar
+# ----------------------------
+# 2. Runtime stage
+# ----------------------------
+FROM eclipse-temurin:17-jdk-alpine
+WORKDIR /app
 
-# Expose the port your Spring Boot app listens on (default 8080)
+# Copy the built JAR from the builder image
+COPY --from=builder /app/target/*.jar app.jar
+
+# Expose the Spring Boot default port
 EXPOSE 8080
 
-# Run the jar file
-ENTRYPOINT ["java","-jar","/app.jar"]
+# Run the app
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
